@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "disguiser",
+  "version": "${version}",
+  "name": "Disguiser",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/disguiser/icon.png",
+  "environment": "server",
+  "entrypoints": {
+    "fabric-datagen": [
+      "org.orsa.disguiser.client.DisguiserDataGenerator"
+    ],
+    "main": [
+      "org.orsa.disguiser.Disguiser"
+    ]
+  },
+  "mixins": [
+    "disguiser.mixins.json",
+    {
+      "config": "disguiser.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
