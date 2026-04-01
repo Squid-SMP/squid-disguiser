@@ -32,7 +32,7 @@ public class NetworkHandler {
         var skinSignature = disguiseData.skinSignature;
 
         THREADPOOL.submit(() -> {
-            ((DisguisedPlayer) player).disguiser_setDisguise(nick, skinValue, skinSignature, false);
+            ((DisguisedPlayer) player).disguiser_setDisguise(nick, skinValue, skinSignature);
         });
     }
 }
