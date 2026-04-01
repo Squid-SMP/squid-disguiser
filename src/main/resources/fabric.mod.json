@@ -20,7 +20,6 @@
     "fabricloader": ">=${loader_version}",
     "fabric-api": "*",
     "minecraft": "${minecraft_version}",
-    "native-squidnames": "*",
     "fabrictailor": "2.8.2"
   }
 }

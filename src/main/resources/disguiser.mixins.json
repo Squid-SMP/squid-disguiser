@@ -4,6 +4,9 @@
   "package": "org.orsa.disguiser.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "ServerLoginNetworkHandlerMixin",
+    "PlayerEntityMixin",
+    "PlayerManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

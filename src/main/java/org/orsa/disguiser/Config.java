@@ -12,17 +12,18 @@ public class Config implements ConfigData {
 
     public static Config CONFIG;
 
-    HashMap<UUID,OfflinePlayerDisguise> offlinePlayerDisguises = new HashMap<>();
+    public HashMap<UUID,OfflinePlayerDisguise> offlinePlayerDisguises = new HashMap<>();
+    public HashMap<UUID, String> nicknames = new HashMap<>();
 
     static void refreshConfig() {
         CONFIG = AutoConfig.getConfigHolder(Config.class).getConfig();
     }
 
-    static void addOfflinePlayerDisguise(UUID uuid, String skinType) {
+    public static void addOfflinePlayerDisguise(UUID uuid, String skinType) {
         addOfflinePlayerDisguise(uuid, skinType, "");
     }
 
-    static void addOfflinePlayerDisguise(UUID uuid, String skinType, String skinName) {
+    public static void addOfflinePlayerDisguise(UUID uuid, String skinType, String skinName) {
         var offlinePlayerDisguise = new OfflinePlayerDisguise();
         offlinePlayerDisguise.skinType = skinType;
         offlinePlayerDisguise.skinName = skinName;
