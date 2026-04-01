@@ -6,16 +6,16 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import org.orsa.disguiser.commands.DisguiseCommand;
-import org.samo_lego.fabrictailor.command.SkinCommand;
-import org.samo_lego.fabrictailor.util.SkinFetcher;
+import org.orsa.disguiser.command.DisguiseCommand;
+//import org.samo_lego.fabrictailor.command.SkinCommand;
+//import org.samo_lego.fabrictailor.util.SkinFetcher;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -24,7 +24,7 @@ import java.util.concurrent.Executors;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
 
-import static org.samo_lego.fabrictailor.util.SkinFetcher.fetchSkinByUrl;
+//import static org.samo_lego.fabrictailor.util.SkinFetcher.fetchSkinByUrl;
 import static org.orsa.disguiser.Config.CONFIG;
 
 public class Disguiser implements ModInitializer {
@@ -48,9 +48,9 @@ public class Disguiser implements ModInitializer {
         ServerPlayConnectionEvents.JOIN.register(Disguiser::onPlayerJoin);
     }
 
-    private static void onPlayerJoin(ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server) {
-        var player = handler.player;
-        var uuid = player.getUuid();
+    private static void onPlayerJoin(ServerGamePacketListenerImpl listener, PacketSender sender, MinecraftServer server) {
+        var player = listener.getPlayer();
+        var uuid = player.getUUID();
 
         if (!CONFIG.offlinePlayerDisguises.containsKey(uuid)) {
             return;
@@ -67,11 +67,11 @@ public class Disguiser implements ModInitializer {
         Config.removeOfflinePlayerDisguise(uuid);
     }
 
-    private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
-        disguiseCommand = new DisguiseCommand(dispatcher);
+    private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        DisguiseCommand.register(dispatcher);
     }
 
-    public static void randomDisguise(ServerPlayerEntity player, boolean setNickname) {
+    public static void randomDisguise(ServerPlayer player, boolean setNickname) {
         boolean result;
 
         try {
@@ -81,23 +81,23 @@ public class Disguiser implements ModInitializer {
         }
 
         if (result && setNickname) {
-            randomName(player.getUuid());
+            randomName(player.getUUID());
         }
     }
 
-    private static boolean randomSkin(ServerPlayerEntity player) {
+    private static boolean randomSkin(ServerPlayer player) {
         var skin = RandomDisguiseSelector.getRandomSkin();
 
         var skinUrl = skin[1];
         var skinUsesSlim = skin[0].equals("slim");
 
-        boolean skinChangeResult;
-        try {
-            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> fetchSkinByUrl(skinUrl, skinUsesSlim))).get();
-        }
-        catch (Exception e) {
-            skinChangeResult = false;
-        }
+        boolean skinChangeResult = true;
+//        try {
+//            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> fetchSkinByUrl(skinUrl, skinUsesSlim))).get();
+//        }
+//        catch (Exception e) {
+//            skinChangeResult = false;
+//        }
 
         return skinChangeResult;
     }
@@ -107,43 +107,43 @@ public class Disguiser implements ModInitializer {
         Nicknamer.trySetPlayerNickname(uuid, name);
     }
 
-    public static void nameDisguise(ServerPlayerEntity player, String name, boolean setNickname) {
-        boolean skinChangeResult;
-        try {
-            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> SkinFetcher.fetchSkinByName(name))).get();
-        }
-        catch (Exception e) {
-            skinChangeResult = false;
-        }
+    public static void nameDisguise(ServerPlayer player, String name, boolean setNickname) {
+        boolean skinChangeResult = true;
+//        try {
+//            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> SkinFetcher.fetchSkinByName(name))).get();
+//        }
+//        catch (Exception e) {
+//            skinChangeResult = false;
+//        }
 
         if (!skinChangeResult) {
             return;
         }
 
         if (setNickname) {
-            Nicknamer.trySetPlayerNickname(player.getUuid(), name);
+            Nicknamer.trySetPlayerNickname(player.getUUID(), name);
         }
     }
 
-    public static void clearDisguise(ServerPlayerEntity player) {
+    public static void clearDisguise(ServerPlayer player) {
         clearDisguise(player, true);
     }
 
-    public static void clearDisguise(ServerPlayerEntity player, boolean setNickname) {
-        boolean skinChangeResult;
-        try {
-            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> SkinFetcher.fetchSkinByUUID(player.getUuid()))).get();
-        }
-        catch (Exception e) {
-            skinChangeResult = false;
-        }
+    public static void clearDisguise(ServerPlayer player, boolean setNickname) {
+        boolean skinChangeResult = true;
+//        try {
+//            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> SkinFetcher.fetchSkinByUUID(player.getUUID()))).get();
+//        }
+//        catch (Exception e) {
+//            skinChangeResult = false;
+//        }
 
         if (!skinChangeResult) {
             return;
         }
 
         if (setNickname) {
-            Nicknamer.clearPlayerNickname(player.getUuid());
+            Nicknamer.clearPlayerNickname(player.getUUID());
         }
     }
 }

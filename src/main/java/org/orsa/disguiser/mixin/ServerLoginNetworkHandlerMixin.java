@@ -14,7 +14,7 @@ import static org.orsa.disguiser.Config.CONFIG;
 import static org.orsa.disguiser.Disguiser.LOGGER;
 
 
-@Mixin(targets = "net.minecraft.server.network.ServerLoginNetworkHandler$1")
+@Mixin(targets = "net.minecraft.server.network.ServerLoginPacketListenerImpl$1")
 public class ServerLoginNetworkHandlerMixin {
 
     @WrapOperation(method = "run()V", at = @At(value="INVOKE", target="Lcom/mojang/authlib/yggdrasil/ProfileResult;profile()Lcom/mojang/authlib/GameProfile;"))

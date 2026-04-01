@@ -1,9 +1,6 @@
 package org.orsa.disguiser;
 
-import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 import java.util.*;
 
@@ -20,13 +17,13 @@ public class Nicknamer {
 
         refreshConfig();
 
-        var player = SERVER.getPlayerManager().getPlayer(uuid);
+        var player = SERVER.getPlayerList().getPlayer(uuid);
 
         if (player == null) {
             return;
         }
 
-        player.networkHandler.disconnect(Text.literal("Your nickname has been cleared. Reconnect to see the changes."));
+        player.connection.disconnect(Component.literal("Your nickname has been cleared. Reconnect to see the changes."));
 
     }
 
@@ -43,13 +40,13 @@ public class Nicknamer {
 
         refreshConfig();
 
-        var player = SERVER.getPlayerManager().getPlayer(uuid);
+        var player = SERVER.getPlayerList().getPlayer(uuid);
 
         if (player == null) {
             return true;
         }
 
-        player.networkHandler.disconnect(Text.literal("Your nickname has been set to \"" + nick + "\". Reconnect to see the changes."));
+        player.connection.disconnect(Component.literal("Your nickname has been set to \"" + nick + "\". Reconnect to see the changes."));
 
         return true;
     }

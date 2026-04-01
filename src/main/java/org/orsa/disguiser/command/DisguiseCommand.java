@@ -1,65 +1,61 @@
-package org.orsa.disguiser.commands;
+package org.orsa.disguiser.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import org.orsa.disguiser.Config;
 import org.orsa.disguiser.Nicknamer;
 import org.orsa.disguiser.util.MojangApi;
 
 import java.util.concurrent.CompletableFuture;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 import static org.orsa.disguiser.Disguiser.*;
 
-public class DisguiseCommand extends Command {
+public class DisguiseCommand {
 
-    public DisguiseCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
-        super(dispatcher);
-    }
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        var disguise = "disguise";
+        var self = "self";
+        var other = "other";
+        var target = "target";
+        var random = "random";
+        var name = "name";
+        var playerName = "playerName";
+        var clear = "clear";
 
-    @Override
-    protected void init() {
-        var base = literal("disguise");
-        var self = literal("self");
-        var other = literal("other");
-        var target = argument("target", StringArgumentType.word()).suggests(DisguiseCommand::suggestOnlinePlayers);
-        var random = literal("random");
-        var name = literal("name");
-        var playerName = argument("playerName", StringArgumentType.word());
-        var clear = literal("clear");
-
-        var commandTree = base
-                .then(self
-                        .then(random
+        var commandTree = literal(disguise)
+                .then(literal(self)
+                        .then(literal(random)
                                 .executes(DisguiseCommand::disguiseSelfRandomCommand)
                         )
-                        .then(name
-                                .then(playerName
+                        .then(literal(name)
+                                .then(argument(playerName, StringArgumentType.word())
                                         .executes(DisguiseCommand::disguiseSelfNameCommand)
                                 )
                         )
-                        .then(clear
+                        .then(literal(clear)
                                 .executes(DisguiseCommand::disguiseSelfClearCommand)
                         )
                 )
-                .then(other
-                        .then(target
-                                .then(random
+                .then(literal(other)
+                        .then(argument(target, StringArgumentType.word()).suggests(DisguiseCommand::suggestOnlinePlayers)
+                                .then(literal(random)
                                         .executes(DisguiseCommand::disguiseOtherRandomCommand)
                                 )
-                                .then(name
-                                        .then(playerName
+                                .then(literal(name)
+                                        .then(argument(playerName, StringArgumentType.word())
                                                 .executes(DisguiseCommand::disguiseOtherNameCommand)
                                         )
                                 )
-                                .then(clear
+                                .then(literal(clear)
                                         .executes(DisguiseCommand::disguiseOtherClearCommand)
                                 )
                         )
@@ -68,50 +64,50 @@ public class DisguiseCommand extends Command {
         dispatcher.register(commandTree);
     }
 
-    private static CompletableFuture<Suggestions> suggestOnlinePlayers(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) {
-        context.getSource().getServer().getPlayerManager().getPlayerList().forEach(p -> builder.suggest(p.getGameProfile().name()));
+    private static CompletableFuture<Suggestions> suggestOnlinePlayers(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
+        context.getSource().getServer().getPlayerList().getPlayers().forEach(p -> builder.suggest(p.getGameProfile().name()));
         return builder.buildFuture();
     }
 
-    private static int disguiseSelfRandomCommand(CommandContext<ServerCommandSource> context) {
+    private static int disguiseSelfRandomCommand(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
         var player = source.getPlayer();
 
         randomDisguise(player, true);
 
-        source.sendMessage(Text.literal("Applying disguise..."));
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
 
-    private static int disguiseSelfNameCommand(CommandContext<ServerCommandSource> context) {
+    private static int disguiseSelfNameCommand(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
         var player = source.getPlayer();
         var disguiseName = StringArgumentType.getString(context, "playerName");
 
         nameDisguise(player, disguiseName, true);
 
-        source.sendMessage(Text.literal("Applying disguise..."));
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
 
-    private static int disguiseSelfClearCommand(CommandContext<ServerCommandSource> context) {
+    private static int disguiseSelfClearCommand(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
         var player = source.getPlayer();
 
         clearDisguise(player);
 
-        source.sendMessage(Text.literal("Applying disguise..."));
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
 
-    private static int disguiseOtherRandomCommand(CommandContext<ServerCommandSource> context) {
+    private static int disguiseOtherRandomCommand(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
         var playerName = StringArgumentType.getString(context, "target");
 
-        ServerPlayerEntity player = SERVER.getPlayerManager().getPlayer(playerName);
+        ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
         if (player != null) {
             randomDisguise(player, true);
@@ -122,17 +118,17 @@ public class DisguiseCommand extends Command {
             randomName(uuid);
         }
 
-        source.sendMessage(Text.literal("Applying disguise..."));
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
 
-    private static int disguiseOtherNameCommand(CommandContext<ServerCommandSource> context) {
+    private static int disguiseOtherNameCommand(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
         var playerName = StringArgumentType.getString(context, "target");
         var disguiseName = StringArgumentType.getString(context, "playerName");
 
-        ServerPlayerEntity player = SERVER.getPlayerManager().getPlayer(playerName);
+        ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
         if (player != null) {
             nameDisguise(player, disguiseName, true);
@@ -143,17 +139,17 @@ public class DisguiseCommand extends Command {
             Nicknamer.trySetPlayerNickname(uuid, disguiseName);
         }
 
-        source.sendMessage(Text.literal("Applying disguise..."));
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
 
 
-    private static int disguiseOtherClearCommand(CommandContext<ServerCommandSource> context) {
+    private static int disguiseOtherClearCommand(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
         var playerName = StringArgumentType.getString(context, "target");
 
-        ServerPlayerEntity player = SERVER.getPlayerManager().getPlayer(playerName);
+        ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
         if (player != null) {
             clearDisguise(player);
@@ -164,7 +160,7 @@ public class DisguiseCommand extends Command {
             Nicknamer.clearPlayerNickname(uuid);
         }
 
-        source.sendMessage(Text.literal("Applying disguise..."));
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }

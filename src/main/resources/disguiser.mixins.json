@@ -5,8 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "ServerLoginNetworkHandlerMixin",
-    "PlayerEntityMixin",
-    "PlayerManagerMixin"
+    "PlayerListMixin"
   ],
   "injectors": {
     "defaultRequire": 1
