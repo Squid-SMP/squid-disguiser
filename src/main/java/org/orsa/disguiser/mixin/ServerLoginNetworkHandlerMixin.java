@@ -31,18 +31,4 @@ public class ServerLoginNetworkHandlerMixin {
 
         return profile;
     }
-
-    @Unique
-    private static GameProfile withDisguise(GameProfile profile, Config.DisguiseData data) {
-        var nick = data.nickname;
-        var skinValue = data.skinValue;
-        var skinSignature = data.skinSignature;
-
-        var property = new Property(DisguisedPlayer.PROPERTY_TEXTURES, skinValue, skinSignature);
-        var properties = ArrayListMultimap.create(profile.properties());
-        properties.put(DisguisedPlayer.PROPERTY_TEXTURES, property);
-        var propertyMap = new PropertyMap(properties);
-
-        return new GameProfile(profile.id(), nick, propertyMap);
-    }
 }
