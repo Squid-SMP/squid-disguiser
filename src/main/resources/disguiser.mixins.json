@@ -11,7 +11,8 @@
     "accessors.ChunkMapAccessor",
     "accessors.EntitySelectorAccessor",
     "accessors.PlayerAccessor",
-    "accessors.TrackedEntityAccessor"
+    "accessors.TrackedEntityAccessor",
+    "accessors.ClientboundPlayerInfoUpdatePacketAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
