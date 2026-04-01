@@ -24,6 +24,7 @@ public class DisguiseCommand {
         var disguise = "disguise";
         var self = "self";
         var other = "other";
+        var toggleVisibility = "toggleVisibility";
         var target = "target";
         var random = "random";
         var name = "name";
@@ -42,6 +43,9 @@ public class DisguiseCommand {
                         )
                         .then(literal(clear)
                                 .executes(DisguiseCommand::disguiseSelfClearCommand)
+                        )
+                        .then(literal(toggleVisibility)
+                                .executes(DisguiseCommand::disguiseToggleVisibility)
                         )
                 )
                 .then(literal(other)
@@ -68,15 +72,24 @@ public class DisguiseCommand {
         return builder.buildFuture();
     }
 
+    private static int disguiseToggleVisibility(CommandContext<CommandSourceStack> context) {
+        var source = context.getSource();
+        var player = source.getPlayer();
+
+        Config.toggleSelfVisibility(player);
+
+        return 1;
+    }
+
     private static int disguiseSelfRandomCommand(CommandContext<CommandSourceStack> context) {
         var source = context.getSource();
         var player = source.getPlayer();
 
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
+
         if (player != null) {
             setRandomDisguise(player.getUUID());
         }
-
-        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
@@ -86,11 +99,11 @@ public class DisguiseCommand {
         var player = source.getPlayer();
         var disguiseName = StringArgumentType.getString(context, "playerName");
 
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
+
         if (player != null) {
             setNameDisguise(player.getUUID(), disguiseName);
         }
-
-        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
@@ -99,11 +112,11 @@ public class DisguiseCommand {
         var source = context.getSource();
         var player = source.getPlayer();
 
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
+
         if (player != null) {
             clearDisguise(player.getUUID());
         }
-
-        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
@@ -114,6 +127,8 @@ public class DisguiseCommand {
 
         ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
+
         if (player != null) {
             setRandomDisguise(player.getUUID());
         }
@@ -121,8 +136,6 @@ public class DisguiseCommand {
             var uuid = MojangApi.getPlayerUUID(playerName);
             setRandomDisguise(uuid);
         }
-
-        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
@@ -134,6 +147,8 @@ public class DisguiseCommand {
 
         ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
+
         if (player != null) {
             setNameDisguise(player.getUUID(), disguiseName);
         }
@@ -141,8 +156,6 @@ public class DisguiseCommand {
             var uuid = MojangApi.getPlayerUUID(playerName);
             setNameDisguise(uuid, disguiseName);
         }
-
-        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }
@@ -154,6 +167,8 @@ public class DisguiseCommand {
 
         ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
+        source.sendSystemMessage(Component.literal("Applying disguise..."));
+
         if (player != null) {
             clearDisguise(player.getUUID());
         }
@@ -161,8 +176,6 @@ public class DisguiseCommand {
             var uuid = MojangApi.getPlayerUUID(playerName);
             clearDisguise(uuid);
         }
-
-        source.sendSystemMessage(Component.literal("Applying disguise..."));
 
         return 1;
     }

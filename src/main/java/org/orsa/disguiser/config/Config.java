@@ -6,6 +6,7 @@ import com.mojang.authlib.properties.Property;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.*;
 
@@ -15,14 +16,12 @@ import static org.orsa.disguiser.Disguiser.SERVER;
 public class Config implements ConfigData {
 
     public Map<String,DisguiseData> disguises = new LinkedTreeMap<>();
-    public String lalala = "";
+    public List<UUID> selfVisibility = new ArrayList<>();
 
-    // Helper to get the live config
     public static Config CONFIG() {
         return AutoConfig.getConfigHolder(Config.class).getConfig();
     }
 
-    // Helper to save
     public static void save() {
         AutoConfig.getConfigHolder(Config.class).save();
     }
@@ -61,6 +60,22 @@ public class Config implements ConfigData {
         }
 
         save();
+    }
+
+    public static void toggleSelfVisibility(ServerPlayer player) {
+        var uuid = player.getUUID();
+        var message = "";
+
+        if (CONFIG().selfVisibility.contains(uuid)) {
+            CONFIG().selfVisibility.remove(uuid);
+            message = "Your disguise is now visible for yourself. Reconnect to see the changes.";
+        }
+        else {
+            CONFIG().selfVisibility.add(uuid);
+            message = "Your disguise is now hidden for yourself. Reconnect to see the changes.";
+        }
+
+        player.connection.disconnect(Component.literal(message));
     }
 
     public static class DisguiseData {

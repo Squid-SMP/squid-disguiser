@@ -49,7 +49,6 @@ public class Disguiser implements ModInitializer {
         RandomDisguiseSelector.initialize();
 
         AutoConfig.register(Config.class, GsonConfigSerializer::new);
-        CONFIG().lalala = "test test test";
         Config.save();
 
         CommandRegistrationCallback.EVENT.register((cd, ra, re) -> registerCommands(cd));

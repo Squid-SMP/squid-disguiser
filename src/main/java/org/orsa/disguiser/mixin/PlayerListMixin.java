@@ -61,6 +61,11 @@ public abstract class PlayerListMixin {
             return;
         }
 
+        if (!CONFIG().selfVisibility.contains(senderUUID)) {
+            connection.send(packet);
+            return;
+        }
+
         var defaultGameProfile = defaultProfiles.get(senderUUID);
         var senderGameProfile = firstEntry.profile();
 
