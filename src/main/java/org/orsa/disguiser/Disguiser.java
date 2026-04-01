@@ -1,12 +1,17 @@
 package org.orsa.disguiser;
 
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import com.mojang.brigadier.CommandDispatcher;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
@@ -14,18 +19,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.orsa.disguiser.command.DisguiseCommand;
-//import org.samo_lego.fabrictailor.command.SkinCommand;
-//import org.samo_lego.fabrictailor.util.SkinFetcher;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
+import org.orsa.disguiser.config.Config;
+import org.orsa.disguiser.network.NetworkHandler;
+import org.orsa.disguiser.util.SkinFetcher;
 
 //import static org.samo_lego.fabrictailor.util.SkinFetcher.fetchSkinByUrl;
-import static org.orsa.disguiser.Config.CONFIG;
+import static org.orsa.disguiser.config.Config.CONFIG;
 
 public class Disguiser implements ModInitializer {
     public static final String MOD_ID = "disguiser";
@@ -34,116 +42,62 @@ public class Disguiser implements ModInitializer {
 
     public static MinecraftServer SERVER;
 
-    public static DisguiseCommand disguiseCommand;
+    public static Map<UUID, GameProfile> defaultProfiles = new HashMap<>();
 
     @Override
     public void onInitialize() {
         RandomDisguiseSelector.initialize();
 
         AutoConfig.register(Config.class, GsonConfigSerializer::new);
-        Config.refreshConfig();
+        CONFIG().lalala = "test test test";
+        Config.save();
 
         CommandRegistrationCallback.EVENT.register((cd, ra, re) -> registerCommands(cd));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> SERVER = server);
-        ServerPlayConnectionEvents.JOIN.register(Disguiser::onPlayerJoin);
+        ServerPlayConnectionEvents.INIT.register(NetworkHandler::onInit);
     }
 
     private static void onPlayerJoin(ServerGamePacketListenerImpl listener, PacketSender sender, MinecraftServer server) {
-        var player = listener.getPlayer();
-        var uuid = player.getUUID();
 
-        if (!CONFIG.offlinePlayerDisguises.containsKey(uuid)) {
-            return;
-        }
-
-        var offlinePlayerDisguise = CONFIG.offlinePlayerDisguises.get(uuid);
-
-        switch (offlinePlayerDisguise.skinType) {
-            case "random" -> randomDisguise(player, false);
-            case "clear" -> clearDisguise(player, false);
-            case "name" -> nameDisguise(player, offlinePlayerDisguise.skinName, false);
-        }
-
-        Config.removeOfflinePlayerDisguise(uuid);
     }
 
     private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
         DisguiseCommand.register(dispatcher);
     }
 
-    public static void randomDisguise(ServerPlayer player, boolean setNickname) {
-        boolean result;
+    public static void setRandomDisguise(UUID uuid) {
+        var nickname = RandomDisguiseSelector.getRandomNickname();
+        var skinProperty = RandomDisguiseSelector.getRandomSkin();
 
-        try {
-            result = THREADPOOL.submit(() -> randomSkin(player)).get();
-        } catch (Exception e) {
-            result = false;
+        Property prop = null;
+        if (skinProperty.isPresent()) {
+            prop = skinProperty.get();
         }
 
-        if (result && setNickname) {
-            randomName(player.getUUID());
-        }
+        storeDisguise(uuid, nickname, prop);
     }
 
-    private static boolean randomSkin(ServerPlayer player) {
-        var skin = RandomDisguiseSelector.getRandomSkin();
-
-        var skinUrl = skin[1];
-        var skinUsesSlim = skin[0].equals("slim");
-
-        boolean skinChangeResult = true;
-//        try {
-//            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> fetchSkinByUrl(skinUrl, skinUsesSlim))).get();
-//        }
-//        catch (Exception e) {
-//            skinChangeResult = false;
-//        }
-
-        return skinChangeResult;
-    }
-
-    public static void randomName(UUID uuid) {
-        var name = RandomDisguiseSelector.getRandomName();
-        Nicknamer.trySetPlayerNickname(uuid, name);
-    }
-
-    public static void nameDisguise(ServerPlayer player, String name, boolean setNickname) {
-        boolean skinChangeResult = true;
-//        try {
-//            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> SkinFetcher.fetchSkinByName(name))).get();
-//        }
-//        catch (Exception e) {
-//            skinChangeResult = false;
-//        }
-
-        if (!skinChangeResult) {
+    public static void setNameDisguise(UUID uuid, String name) {
+        if (!Nicknamer.isNicknameValid(name)) {
             return;
         }
 
-        if (setNickname) {
-            Nicknamer.trySetPlayerNickname(player.getUUID(), name);
-        }
-    }
+        var skinProperty = SkinFetcher.fetchSkinByName(name);
 
-    public static void clearDisguise(ServerPlayer player) {
-        clearDisguise(player, true);
-    }
-
-    public static void clearDisguise(ServerPlayer player, boolean setNickname) {
-        boolean skinChangeResult = true;
-//        try {
-//            skinChangeResult = THREADPOOL.submit(() -> SkinCommand.setSkin(player, () -> SkinFetcher.fetchSkinByUUID(player.getUUID()))).get();
-//        }
-//        catch (Exception e) {
-//            skinChangeResult = false;
-//        }
-
-        if (!skinChangeResult) {
-            return;
+        Property prop = null;
+        if (skinProperty.isPresent()) {
+            prop = skinProperty.get();
         }
 
-        if (setNickname) {
-            Nicknamer.clearPlayerNickname(player.getUUID());
-        }
+        storeDisguise(uuid, name, prop);
     }
+
+    private static void storeDisguise(UUID uuid, String nickname, Property skinProperty) {
+        Config.addDisguise(uuid, nickname, skinProperty);
+    }
+
+    public static void clearDisguise(UUID uuid) {
+        Config.removeDisguise(uuid);
+    }
+
 }

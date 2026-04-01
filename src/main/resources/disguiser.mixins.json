@@ -5,7 +5,13 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "ServerLoginNetworkHandlerMixin",
-    "PlayerListMixin"
+    "PlayerListMixin",
+    "ServerPlayerMixin",
+    "accessors.AvatarAccessor",
+    "accessors.ChunkMapAccessor",
+    "accessors.EntitySelectorAccessor",
+    "accessors.PlayerAccessor",
+    "accessors.TrackedEntityAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

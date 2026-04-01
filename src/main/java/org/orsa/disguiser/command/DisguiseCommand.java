@@ -2,14 +2,13 @@ package org.orsa.disguiser.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import org.orsa.disguiser.Config;
+import org.orsa.disguiser.config.Config;
 import org.orsa.disguiser.Nicknamer;
 import org.orsa.disguiser.util.MojangApi;
 
@@ -73,7 +72,9 @@ public class DisguiseCommand {
         var source = context.getSource();
         var player = source.getPlayer();
 
-        randomDisguise(player, true);
+        if (player != null) {
+            setRandomDisguise(player.getUUID());
+        }
 
         source.sendSystemMessage(Component.literal("Applying disguise..."));
 
@@ -85,7 +86,9 @@ public class DisguiseCommand {
         var player = source.getPlayer();
         var disguiseName = StringArgumentType.getString(context, "playerName");
 
-        nameDisguise(player, disguiseName, true);
+        if (player != null) {
+            setNameDisguise(player.getUUID(), disguiseName);
+        }
 
         source.sendSystemMessage(Component.literal("Applying disguise..."));
 
@@ -96,7 +99,9 @@ public class DisguiseCommand {
         var source = context.getSource();
         var player = source.getPlayer();
 
-        clearDisguise(player);
+        if (player != null) {
+            clearDisguise(player.getUUID());
+        }
 
         source.sendSystemMessage(Component.literal("Applying disguise..."));
 
@@ -110,12 +115,11 @@ public class DisguiseCommand {
         ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
         if (player != null) {
-            randomDisguise(player, true);
+            setRandomDisguise(player.getUUID());
         }
         else {
             var uuid = MojangApi.getPlayerUUID(playerName);
-            Config.addOfflinePlayerDisguise(uuid, "random");
-            randomName(uuid);
+            setRandomDisguise(uuid);
         }
 
         source.sendSystemMessage(Component.literal("Applying disguise..."));
@@ -131,12 +135,11 @@ public class DisguiseCommand {
         ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
         if (player != null) {
-            nameDisguise(player, disguiseName, true);
+            setNameDisguise(player.getUUID(), disguiseName);
         }
         else {
             var uuid = MojangApi.getPlayerUUID(playerName);
-            Config.addOfflinePlayerDisguise(uuid, "name", disguiseName);
-            Nicknamer.trySetPlayerNickname(uuid, disguiseName);
+            setNameDisguise(uuid, disguiseName);
         }
 
         source.sendSystemMessage(Component.literal("Applying disguise..."));
@@ -152,12 +155,11 @@ public class DisguiseCommand {
         ServerPlayer player = SERVER.getPlayerList().getPlayer(playerName);
 
         if (player != null) {
-            clearDisguise(player);
+            clearDisguise(player.getUUID());
         }
         else {
             var uuid = MojangApi.getPlayerUUID(playerName);
-            Config.addOfflinePlayerDisguise(uuid, "clear");
-            Nicknamer.clearPlayerNickname(uuid);
+            clearDisguise(uuid);
         }
 
         source.sendSystemMessage(Component.literal("Applying disguise..."));

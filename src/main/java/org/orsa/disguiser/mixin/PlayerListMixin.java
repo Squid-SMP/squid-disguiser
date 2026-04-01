@@ -8,7 +8,7 @@ import net.minecraft.server.players.PlayerList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import static org.orsa.disguiser.Config.CONFIG;
+import static org.orsa.disguiser.config.Config.CONFIG;
 
 @Mixin(PlayerList.class)
 public abstract class PlayerListMixin {
@@ -21,7 +21,7 @@ public abstract class PlayerListMixin {
             )
     )
     private boolean wrapNameChangedCheck(String a, String b, Operation<Boolean> original, @Local(argsOnly = true) ServerPlayer player) {
-        if (CONFIG.nicknames.containsKey(player.getUUID())) {
+        if (CONFIG().disguises.containsKey(player.getUUID())) {
             return true;
         }
 
