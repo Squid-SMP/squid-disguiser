@@ -3,6 +3,10 @@ package org.orsa.disguiser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import com.mojang.brigadier.CommandDispatcher;
+import me.neznamy.tab.api.TabAPI;
+import me.neznamy.tab.api.TabPlayer;
+import me.neznamy.tab.api.event.player.PlayerLoadEvent;
+import me.neznamy.tab.api.tablist.TabListFormatManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -52,12 +56,34 @@ public class Disguiser implements ModInitializer {
         Config.save();
 
         CommandRegistrationCallback.EVENT.register((cd, ra, re) -> registerCommands(cd));
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> SERVER = server);
         ServerPlayConnectionEvents.INIT.register(NetworkHandler::onInit);
+
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            SERVER = server;
+            tryRegisterTabListener();
+        });
     }
 
-    private static void onPlayerJoin(ServerGamePacketListenerImpl listener, PacketSender sender, MinecraftServer server) {
+    private static void tryRegisterTabListener() {
+        try {
+            TabAPI.getInstance().getEventBus().register(PlayerLoadEvent.class, Disguiser::onTabRegister);
+        } catch (Exception e) {
+            LOGGER.debug("TAB API not available: {}", e.getMessage());
+        }
+    }
 
+    private static void onTabRegister(PlayerLoadEvent event) {
+        TabPlayer tabPlayer = event.getPlayer();
+        UUID uuid = tabPlayer.getUniqueId();
+
+        if (!CONFIG().disguises.containsKey(uuid.toString())) {
+            return;
+        }
+
+        TabListFormatManager manager = TabAPI.getInstance().getTabListFormatManager();
+        if (manager == null) return;
+
+        manager.setName(tabPlayer, null);
     }
 
     private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
