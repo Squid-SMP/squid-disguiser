@@ -23,7 +23,7 @@ import static org.orsa.disguiser.Disguiser.LOGGER;
 import static org.orsa.disguiser.Disguiser.defaultProfiles;
 import static org.orsa.disguiser.config.Config.CONFIG;
 
-@Mixin(PlayerList.class)
+@Mixin(value = PlayerList.class, priority = 9999999)
 public abstract class PlayerListMixin {
     @WrapOperation(method = "placeNewPlayer", at = @At(value = "INVOKE", target = "Ljava/lang/String;equalsIgnoreCase(Ljava/lang/String;)Z"))
     private boolean wrapNameChangedCheck(String a, String b, Operation<Boolean> original, @Local(argsOnly = true) ServerPlayer player) {
@@ -35,7 +35,7 @@ public abstract class PlayerListMixin {
     }
 
     @Redirect(method = "broadcastAll(Lnet/minecraft/network/protocol/Packet;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V"))
-    private void redirectBroadcastSend(ServerGamePacketListenerImpl connection, Packet packet) {
+    private void redirectBroadcastSend(ServerGamePacketListenerImpl connection, Packet<?> packet) {
         if (!(packet instanceof ClientboundPlayerInfoUpdatePacket playerInfoUpdatePacket)) {
             connection.send(packet);
             return;
@@ -53,7 +53,7 @@ public abstract class PlayerListMixin {
         ServerPlayer receiverPlayer = connection.player;
         UUID receiverUUID = receiverPlayer.getUUID();
 
-        if (receiverUUID != senderUUID) {
+        if (!receiverUUID.equals(senderUUID)) {
             connection.send(packet);
             return;
         }
@@ -65,6 +65,8 @@ public abstract class PlayerListMixin {
 
         var defaultGameProfile = defaultProfiles.get(senderUUID);
         var accessor = (ClientboundPlayerInfoUpdatePacketAccessor) packet;
+
+        var original = accessor.getEntries();
 
         List<ClientboundPlayerInfoUpdatePacket.Entry> modified = accessor.getEntries().stream()
                 .map(entry -> new ClientboundPlayerInfoUpdatePacket.Entry(
@@ -80,43 +82,46 @@ public abstract class PlayerListMixin {
                 ))
                 .toList();
 
-        accessor.setEntries(modified);
-
-        connection.send(packet);
-    }
-
-    @Redirect(
-            method = "broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;Ljava/util/function/Predicate;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/network/chat/ChatType$Bound;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;sendChatMessage(Lnet/minecraft/network/chat/OutgoingChatMessage;ZLnet/minecraft/network/chat/ChatType$Bound;)V")
-    )
-    private void redirectChatSend(ServerPlayer recipient, OutgoingChatMessage outgoingChatMessage, boolean bl, ChatType.Bound bound, @Local(argsOnly = true) ServerPlayer sender) {
-        UUID senderUUID = sender.getUUID();
-        boolean senderIsDisguised = CONFIG().disguises.containsKey(senderUUID.toString());
-
-        if (!senderIsDisguised) {
-            recipient.sendChatMessage(outgoingChatMessage, bl, bound);
-            return;
-        }
-
-        UUID recipientUUID = recipient.getUUID();
-
-        if (recipientUUID != senderUUID) {
-            recipient.sendChatMessage(outgoingChatMessage, bl, bound);
-            return;
-        }
-
-        if (!CONFIG().selfVisibility.contains(senderUUID)) {
-            recipient.sendChatMessage(outgoingChatMessage, bl, bound);
-            return;
-        }
-
-        var defaultGameProfile = defaultProfiles.get(senderUUID);
-
-        ChatType.Bound modifiedBound = new ChatType.Bound(
-                bound.chatType(),
-                Component.literal(defaultGameProfile.name()),
-                bound.targetName()
+        ClientboundPlayerInfoUpdatePacket newPacket = new ClientboundPlayerInfoUpdatePacket(
+                playerInfoUpdatePacket.actions(),
+                List.of(receiverPlayer)
         );
 
-        recipient.sendChatMessage(outgoingChatMessage, bl, modifiedBound);
+        ((ClientboundPlayerInfoUpdatePacketAccessor) newPacket).setEntries(modified);
+
+        connection.send(newPacket);
     }
+
+//    @Redirect(method = "broadcastChatMessage(Lnet/minecraft/network/chat/PlayerChatMessage;Ljava/util/function/Predicate;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/network/chat/ChatType$Bound;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;sendChatMessage(Lnet/minecraft/network/chat/OutgoingChatMessage;ZLnet/minecraft/network/chat/ChatType$Bound;)V"))
+//    private void redirectChatSend(ServerPlayer recipient, OutgoingChatMessage outgoingChatMessage, boolean bl, ChatType.Bound bound, @Local(argsOnly = true) ServerPlayer sender) {
+//        UUID senderUUID = sender.getUUID();
+//        boolean senderIsDisguised = CONFIG().disguises.containsKey(senderUUID.toString());
+//
+//        if (!senderIsDisguised) {
+//            recipient.sendChatMessage(outgoingChatMessage, bl, bound);
+//            return;
+//        }
+//
+//        UUID recipientUUID = recipient.getUUID();
+//
+//        if (!recipientUUID.equals(senderUUID)) {
+//            recipient.sendChatMessage(outgoingChatMessage, bl, bound);
+//            return;
+//        }
+//
+//        if (!CONFIG().selfVisibility.contains(senderUUID)) {
+//            recipient.sendChatMessage(outgoingChatMessage, bl, bound);
+//            return;
+//        }
+//
+//        var defaultGameProfile = defaultProfiles.get(senderUUID);
+//
+//        ChatType.Bound modifiedBound = new ChatType.Bound(
+//                bound.chatType(),
+//                Component.literal(defaultGameProfile.name()),
+//                bound.targetName()
+//        );
+//
+//        recipient.sendChatMessage(outgoingChatMessage, bl, modifiedBound);
+//    }
 }
