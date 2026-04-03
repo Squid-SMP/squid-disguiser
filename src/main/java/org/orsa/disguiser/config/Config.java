@@ -16,6 +16,7 @@ import static org.orsa.disguiser.Disguiser.SERVER;
 public class Config implements ConfigData {
 
     public Map<String,DisguiseData> disguises = new LinkedTreeMap<>();
+    public Map<String,String> disguiseNames = new LinkedTreeMap<>();
     public List<UUID> selfVisibility = new ArrayList<>();
 
     public static Config CONFIG() {
@@ -40,13 +41,22 @@ public class Config implements ConfigData {
         disguise.skinValue = skinValue;
         disguise.skinSignature = skinSignature;
 
-        CONFIG().disguises.put(uuid.toString(), disguise);
+        var uuidStr = uuid.toString();
+        CONFIG().disguises.put(uuidStr, disguise);
+        CONFIG().disguiseNames.put(nickname, uuidStr);
 
         onDisguiseConfigUpdated(uuid, "Your disguise has been set to \"" + nickname + "\". Reconnect to see the changes.");
     }
 
     public static void removeDisguise(UUID uuid) {
-        CONFIG().disguises.put(uuid.toString(), new DisguiseData());
+        var uuidStr = uuid.toString();
+        var disguiseData = CONFIG().disguises.get(uuidStr);
+
+        if (disguiseData != null) {
+            var nickname = disguiseData.nickname;
+            CONFIG().disguiseNames.remove(nickname);
+            CONFIG().disguises.put(uuidStr, new DisguiseData());
+        }
 
         onDisguiseConfigUpdated(uuid, "Your disguise has been cleared. Reconnect to see the changes.");
     }
@@ -76,6 +86,8 @@ public class Config implements ConfigData {
         }
 
         player.connection.disconnect(Component.literal(message));
+
+        save();
     }
 
     public static class DisguiseData {

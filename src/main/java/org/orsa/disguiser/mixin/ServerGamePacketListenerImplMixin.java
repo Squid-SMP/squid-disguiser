@@ -1,5 +1,6 @@
 package org.orsa.disguiser.mixin;
 
+import com.google.common.graph.Network;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.ComponentContents;
@@ -8,6 +9,7 @@ import net.minecraft.network.chat.contents.PlainTextContents;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import org.orsa.disguiser.network.NetworkHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -56,7 +58,7 @@ public class ServerGamePacketListenerImplMixin {
         ChatType.Bound originalBound = playerChatPacket.chatType();
         Component originalBoundName = originalBound.name();
 
-        var newName = replaceInComponent(originalBoundName, disguisedName, realName);
+        var newName = NetworkHandler.replaceInComponent(originalBoundName, disguisedName, realName);
 
         ChatType.Bound modifiedBound = new ChatType.Bound(
                 originalBound.chatType(),
@@ -77,22 +79,4 @@ public class ServerGamePacketListenerImplMixin {
 
         connection.send(modifiedPacket);
     }
-
-    private Component replaceInComponent(Component component, String find, String replacement) {
-        MutableComponent result = component.plainCopy();
-
-        if (component instanceof MutableComponent mutable) {
-            ComponentContents contents = component.getContents();
-            if (contents instanceof PlainTextContents.LiteralContents(String text)) {
-                result = Component.literal(text.replace(find, replacement))
-                        .withStyle(component.getStyle());
-            }
-        }
-
-        for (Component sibling : component.getSiblings()) {
-            result.append(replaceInComponent(sibling, find, replacement));
-        }
-
-        return result;
     }
-}

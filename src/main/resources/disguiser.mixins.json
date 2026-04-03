@@ -8,6 +8,8 @@
     "PlayerListMixin",
     "ServerPlayerMixin",
     "ServerGamePacketListenerImplMixin",
+    "ServerCommonPacketListenerImplMixin",
+    "TabChannelDuplexHandlerMixin",
     "accessors.AvatarAccessor",
     "accessors.ChunkMapAccessor",
     "accessors.EntitySelectorAccessor",

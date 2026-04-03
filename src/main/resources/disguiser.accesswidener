@@ -1,0 +1,13 @@
+accessWidener v2 named
+
+mutable field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket players Ljava/util/Collection;
+accessible field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket players Ljava/util/Collection;
+
+mutable field net/minecraft/network/protocol/game/ClientboundSetScorePacket owner Ljava/lang/String;
+accessible field net/minecraft/network/protocol/game/ClientboundSetScorePacket owner Ljava/lang/String;
+
+mutable field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket name Ljava/lang/String;
+accessible field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket name Ljava/lang/String;
+
+mutable field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket$Parameters displayName Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket$Parameters displayName Lnet/minecraft/network/chat/Component;

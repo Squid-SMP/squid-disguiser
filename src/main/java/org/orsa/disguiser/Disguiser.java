@@ -48,6 +48,7 @@ public class Disguiser implements ModInitializer {
 
     public static Map<UUID, GameProfile> defaultProfiles = new HashMap<>();
 
+
     @Override
     public void onInitialize() {
         RandomDisguiseSelector.initialize();
@@ -58,32 +59,11 @@ public class Disguiser implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((cd, ra, re) -> registerCommands(cd));
         ServerPlayConnectionEvents.INIT.register(NetworkHandler::onInit);
 
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            SERVER = server;
-            tryRegisterTabListener();
-        });
+        ServerLifecycleEvents.SERVER_STARTED.register(Disguiser::onServerStarted);
     }
 
-    private static void tryRegisterTabListener() {
-        try {
-            TabAPI.getInstance().getEventBus().register(PlayerLoadEvent.class, Disguiser::onTabRegister);
-        } catch (Exception e) {
-            LOGGER.debug("TAB API not available: {}", e.getMessage());
-        }
-    }
-
-    private static void onTabRegister(PlayerLoadEvent event) {
-        TabPlayer tabPlayer = event.getPlayer();
-        UUID uuid = tabPlayer.getUniqueId();
-
-        if (!CONFIG().disguises.containsKey(uuid.toString())) {
-            return;
-        }
-
-        TabListFormatManager manager = TabAPI.getInstance().getTabListFormatManager();
-        if (manager == null) return;
-
-        manager.setName(tabPlayer, null);
+    private static void onServerStarted(MinecraftServer server) {
+        SERVER = server;
     }
 
     private static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {

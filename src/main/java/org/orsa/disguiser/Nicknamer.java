@@ -5,7 +5,6 @@ import net.minecraft.network.chat.Component;
 import java.util.*;
 
 import static org.orsa.disguiser.config.Config.CONFIG;
-import static org.orsa.disguiser.config.Config.refreshConfig;
 import static org.orsa.disguiser.Disguiser.SERVER;
 
 public class Nicknamer {
