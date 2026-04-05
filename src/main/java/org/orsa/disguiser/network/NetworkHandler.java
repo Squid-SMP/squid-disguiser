@@ -222,7 +222,9 @@ public class NetworkHandler {
 
     public static ClientboundPlayerChatPacket modifyPlayerChatPacket(ClientboundPlayerChatPacket packet, UUID receiverUUID) {
         UUID senderUUID = packet.sender();
-        boolean senderIsDisguised = CONFIG().disguises.containsKey(senderUUID.toString());
+        var disguises = CONFIG().disguises;
+        var uuidString = senderUUID.toString();
+        boolean senderIsDisguised = disguises.containsKey(uuidString) && !disguises.get(uuidString).nickname.isEmpty();
 
         if (!senderIsDisguised) {
             return packet;
@@ -267,7 +269,9 @@ public class NetworkHandler {
     }
 
     public static ClientboundSystemChatPacket modifySystemChatPacket(ClientboundSystemChatPacket packet, UUID receiverUUID) {
-        boolean receiverIsDisguised = CONFIG().disguises.containsKey(receiverUUID.toString());
+        var disguises = CONFIG().disguises;
+        var uuidString = receiverUUID.toString();
+        boolean receiverIsDisguised = disguises.containsKey(uuidString) && !disguises.get(uuidString).nickname.isEmpty();
 
         if (!receiverIsDisguised) {
             return packet;
