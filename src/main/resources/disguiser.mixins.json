@@ -7,7 +7,6 @@
     "ServerLoginNetworkHandlerMixin",
     "PlayerListMixin",
     "ServerPlayerMixin",
-    "ServerGamePacketListenerImplMixin",
     "ServerCommonPacketListenerImplMixin",
     "TabChannelDuplexHandlerMixin",
     "accessors.AvatarAccessor",

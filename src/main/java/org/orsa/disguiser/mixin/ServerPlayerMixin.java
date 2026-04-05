@@ -30,6 +30,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
+import static org.orsa.disguiser.Disguiser.LOGGER;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
@@ -44,10 +46,6 @@ public abstract class ServerPlayerMixin extends Player implements DisguisedPlaye
 
     @Shadow
     protected abstract void completeUsingItem();
-
-    @Shadow
-    @Final
-    private static Logger LOGGER;
 
     public ServerPlayerMixin(Level level, GameProfile gameProfile) {
         super(level, gameProfile);

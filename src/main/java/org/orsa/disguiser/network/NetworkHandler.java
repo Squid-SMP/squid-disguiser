@@ -136,7 +136,14 @@ public class NetworkHandler {
         }
 
         var senderName = players.stream().findFirst().get();
-        var senderUUID = UUID.fromString(CONFIG().disguiseNames.get(senderName));
+
+        var senderUUIDStr = CONFIG().disguiseNames.get(senderName);
+
+        if (senderUUIDStr == null) {
+            return packet;
+        }
+
+        var senderUUID = UUID.fromString(senderUUIDStr);
 
         if (!receiverUUID.equals(senderUUID)) {
             return packet;
