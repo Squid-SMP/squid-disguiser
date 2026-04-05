@@ -50,17 +50,20 @@ public class NetworkHandler {
             }
 
             if (contents instanceof TranslatableContents translatable) {
-                var args = translatable.getArgs();
-                var i = 0;
-                for (var arg : args) {
+                Object[] newArgs = new Object[translatable.getArgs().length];
+                for (int i = 0; i < translatable.getArgs().length; i++) {
+                    Object arg = translatable.getArgs()[i];
                     if (arg instanceof Component componentArg) {
-                        args[i] = replaceInComponent(componentArg, find, replacement);
+                        newArgs[i] = replaceInComponent(componentArg, find, replacement);
+                    } else {
+                        newArgs[i] = arg;
                     }
-
-                    i++;
                 }
-
-                translatable.args = args;
+                result = MutableComponent.create(new TranslatableContents(
+                        translatable.getKey(),
+                        translatable.getFallback(),
+                        newArgs
+                )).withStyle(component.getStyle());
             }
         }
 
@@ -281,8 +284,8 @@ public class NetworkHandler {
 
         var newContent = NetworkHandler.replaceInComponent(packet.content(), disguisedName, realName);
 
-        packet.content = newContent;
+        ClientboundSystemChatPacket modifiedPacket = new ClientboundSystemChatPacket(newContent, packet.overlay());
 
-        return packet;
+        return modifiedPacket;
     }
 }

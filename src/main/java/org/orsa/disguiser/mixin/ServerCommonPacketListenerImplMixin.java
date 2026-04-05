@@ -1,13 +1,17 @@
 package org.orsa.disguiser.mixin;
 
 import com.mojang.authlib.GameProfile;
+import io.netty.channel.ChannelFutureListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.network.ServerCommonPacketListenerImpl;
+import org.orsa.disguiser.Disguiser;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static org.orsa.disguiser.network.NetworkHandler.*;
 
@@ -23,8 +27,6 @@ public abstract class ServerCommonPacketListenerImplMixin {
             index = 0
     )
     private Packet<?> onSendPacket(Packet<?> packet) {
-//        LOGGER.info("Packet: {} | {}", packet.getClass().getSimpleName(), packet);
-
         switch (packet) {
             case ClientboundSetPlayerTeamPacket setPlayerTeamPacket -> {
                 var newPacket = modifySetPlayerTeamPacket(setPlayerTeamPacket, playerProfile().id());
@@ -53,3 +55,22 @@ public abstract class ServerCommonPacketListenerImplMixin {
         return packet;
     }
 }
+
+//@Inject(
+//        method = "send(Lnet/minecraft/network/protocol/Packet;Lio/netty/channel/ChannelFutureListener;)V",
+//        at = @At("HEAD"),
+//        cancellable = true
+//)
+//private void injectOnSendPacket(Packet<?> packet, ChannelFutureListener listener, CallbackInfo ci) {
+//    switch (packet) {
+//        case ClientboundSystemChatPacket systemChatPacket -> {
+//            Disguiser.LOGGER.info(playerProfile().id());
+//            Disguiser.LOGGER.info(systemChatPacket.content());
+//            var modifiedPacket = modifySystemChatPacket(systemChatPacket, playerProfile().id());
+//            this.connection.send(modifiedPacket, listener);
+//            ci.cancel();
+//        }
+//        default -> {
+//        }
+//    }
+//}
