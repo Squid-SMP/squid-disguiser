@@ -2,6 +2,8 @@ package org.orsa.disguiser.mixin;
 
 import me.neznamy.tab.shared.features.injection.NettyPipelineInjector;
 import me.neznamy.tab.shared.platform.TabPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket;
 import net.minecraft.network.protocol.game.ClientboundSetScorePacket;
@@ -13,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import static org.orsa.disguiser.network.NetworkHandler.*;
+import static org.orsa.disguiser.Disguiser.LOGGER;
 
 @Mixin(value = NettyPipelineInjector.TabChannelDuplexHandler.class, remap = false)
 public abstract class TabChannelDuplexHandlerMixin {

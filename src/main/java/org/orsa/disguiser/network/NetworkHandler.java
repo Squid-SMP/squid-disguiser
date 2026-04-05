@@ -1,30 +1,22 @@
 package org.orsa.disguiser.network;
 
-import com.mojang.authlib.properties.Property;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentContents;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.PlainTextContents;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
-import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket;
-import net.minecraft.network.protocol.game.ClientboundSetScorePacket;
+import net.minecraft.network.protocol.game.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.orsa.disguiser.interfaces.DisguisedPlayer;
 import org.orsa.disguiser.mixin.accessors.ClientboundPlayerInfoUpdatePacketAccessor;
-import org.spongepowered.asm.mixin.Unique;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.orsa.disguiser.Disguiser.*;
 import static org.orsa.disguiser.config.Config.CONFIG;
-import static org.orsa.disguiser.util.SkinFetcher.fetchSkinByName;
 
 public class NetworkHandler {
 
@@ -55,6 +47,20 @@ public class NetworkHandler {
             if (contents instanceof PlainTextContents.LiteralContents(String text)) {
                 result = Component.literal(text.replace(find, replacement))
                         .withStyle(component.getStyle());
+            }
+
+            if (contents instanceof TranslatableContents translatable) {
+                var args = translatable.getArgs();
+                var i = 0;
+                for (var arg : args) {
+                    if (arg instanceof Component componentArg) {
+                        args[i] = replaceInComponent(componentArg, find, replacement);
+                    }
+
+                    i++;
+                }
+
+                translatable.args = args;
             }
         }
 
@@ -120,13 +126,6 @@ public class NetworkHandler {
 
         ((ClientboundPlayerInfoUpdatePacketAccessor) newPacket).setEntries(modified);
 
-        newPacket.entries().forEach(e ->
-                LOGGER.info("Actions: {} | profileId: {} | displayName: {} | profile: {}",
-                        newPacket.actions(),
-                        e.profileId(),
-                        e.displayName(),
-                        e.profile() != null ? e.profile().name() : "null"));
-
         return newPacket;
     }
 
@@ -153,7 +152,7 @@ public class NetworkHandler {
         packet.name = packet.name.replace(senderName,newName);
         packet.players = List.of(newName);
         packet.getParameters().ifPresent(params -> {
-            params.displayName = NetworkHandler.replaceInComponent(params.displayName, senderName, newName);
+            params.displayName = replaceInComponent(params.displayName, senderName, newName);
         });
 
         return packet;
@@ -175,6 +174,107 @@ public class NetworkHandler {
         var newName = defaultGameProfile.name();
 
         packet.owner = newName;
+
+        return packet;
+    }
+
+    public static ClientboundPlayerCombatKillPacket modifyPlayerCombatKillPacket(ClientboundPlayerCombatKillPacket packet, UUID receiverUUID) {
+        var senderEntityID = packet.playerId();
+
+        ServerPlayer senderPlayer = SERVER.getPlayerList().getPlayers().stream()
+                .filter(p -> p.getId() == senderEntityID)
+                .findFirst()
+                .orElse(null);
+
+        if (senderPlayer == null) {
+            return packet;
+        }
+
+        var senderUUID = senderPlayer.getUUID();
+
+        if (!receiverUUID.equals(senderUUID)) {
+            return packet;
+        }
+
+        if (!CONFIG().selfVisibility.contains(senderUUID)) {
+            return packet;
+        }
+
+        var defaultGameProfile = defaultProfiles.get(senderUUID);
+        var realName = defaultGameProfile.name();
+
+        String disguisedName = CONFIG().disguises.get(senderUUID.toString()).nickname;
+
+        packet.message = replaceInComponent(packet.message, disguisedName, realName);
+
+        return packet;
+    }
+
+    public static ClientboundPlayerChatPacket modifyPlayerChatPacket(ClientboundPlayerChatPacket packet, UUID receiverUUID) {
+        UUID senderUUID = packet.sender();
+        boolean senderIsDisguised = CONFIG().disguises.containsKey(senderUUID.toString());
+
+        if (!senderIsDisguised) {
+            return packet;
+        }
+
+        if (!receiverUUID.equals(senderUUID)) {
+            return packet;
+        }
+
+        if (!CONFIG().selfVisibility.contains(senderUUID)) {
+            return packet;
+        }
+
+        var defaultGameProfile = defaultProfiles.get(senderUUID);
+        String realName = defaultGameProfile.name();
+
+        String disguisedName = CONFIG().disguises.get(senderUUID.toString()).nickname;
+
+        ChatType.Bound originalBound = packet.chatType();
+        Component originalBoundName = originalBound.name();
+
+        var newName = NetworkHandler.replaceInComponent(originalBoundName, disguisedName, realName);
+
+        ChatType.Bound modifiedBound = new ChatType.Bound(
+                originalBound.chatType(),
+                newName,
+                originalBound.targetName()
+        );
+
+        ClientboundPlayerChatPacket modifiedPacket = new ClientboundPlayerChatPacket(
+                packet.globalIndex(),
+                packet.sender(),
+                packet.index(),
+                packet.signature(),
+                packet.body(),
+                packet.unsignedContent(),
+                packet.filterMask(),
+                modifiedBound
+        );
+
+        return modifiedPacket;
+    }
+
+    public static ClientboundSystemChatPacket modifySystemChatPacket(ClientboundSystemChatPacket packet, UUID receiverUUID) {
+        boolean receiverIsDisguised = CONFIG().disguises.containsKey(receiverUUID.toString());
+
+        if (!receiverIsDisguised) {
+            return packet;
+        }
+
+        if (!CONFIG().selfVisibility.contains(receiverUUID)) {
+            return packet;
+        }
+
+        var defaultGameProfile = defaultProfiles.get(receiverUUID);
+        String realName = defaultGameProfile.name();
+
+        String disguisedName = CONFIG().disguises.get(receiverUUID.toString()).nickname;
+
+        var newContent = NetworkHandler.replaceInComponent(packet.content(), disguisedName, realName);
+
+        packet.content = newContent;
 
         return packet;
     }

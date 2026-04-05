@@ -1,5 +1,8 @@
 accessWidener v2 named
 
+mutable field net/minecraft/network/protocol/game/ClientboundPlayerCombatKillPacket message Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/network/protocol/game/ClientboundPlayerCombatKillPacket message Lnet/minecraft/network/chat/Component;
+
 mutable field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket players Ljava/util/Collection;
 accessible field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket players Ljava/util/Collection;
 
@@ -11,3 +14,9 @@ accessible field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPac
 
 mutable field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket$Parameters displayName Lnet/minecraft/network/chat/Component;
 accessible field net/minecraft/network/protocol/game/ClientboundSetPlayerTeamPacket$Parameters displayName Lnet/minecraft/network/chat/Component;
+
+mutable field net/minecraft/network/chat/contents/TranslatableContents args [Ljava/lang/Object;
+accessible field net/minecraft/network/chat/contents/TranslatableContents args [Ljava/lang/Object;
+
+mutable field net/minecraft/network/protocol/game/ClientboundSystemChatPacket content Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/network/protocol/game/ClientboundSystemChatPacket content Lnet/minecraft/network/chat/Component;
