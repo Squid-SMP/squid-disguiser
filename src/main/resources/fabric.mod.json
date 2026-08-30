@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "id": "disguiser",
+  "id": "squid-disguiser",
   "version": "${version}",
-  "name": "Disguiser",
+  "name": "Squid Disguiser",
   "description": "",
   "authors": [],
   "contact": {},
@@ -14,12 +14,12 @@
     ]
   },
   "mixins": [
-    "disguiser.mixins.json"
+    "squid-disguiser.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric-api": "*",
     "minecraft": "${minecraft_version}"
   },
-  "accessWidener": "disguiser.accesswidener"
+  "accessWidener": "squid-disguiser.accesswidener"
 }
